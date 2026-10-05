@@ -1,0 +1,1 @@
+enum LedTransport { ble, classic }

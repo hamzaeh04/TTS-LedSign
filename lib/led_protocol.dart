@@ -16,6 +16,32 @@ enum LedMovingMode {
   const LedMovingMode(this.code);
 }
 
+/// Candidate layouts for the message (type 0x01) frame. The sign's firmware
+/// doesn't parse [a] the way the protocol doc suggests: videos from the
+/// client show the first character dropped and the checksum byte displayed
+/// as a trailing character, i.e. the sign reads the text 2 bytes later than
+/// we put it and expects the frame to be 2 bytes longer. We don't have the
+/// hardware, so these variants are selectable in the app for the client to
+/// try one by one.
+enum LedFrameVariant {
+  /// Original layout: slot, 0x41, mode, 0x00, UTF-16BE text.
+  a('A: current'),
+
+  /// Two extra 0x00 bytes before the text, length field NOT counting them.
+  /// Matches the behaviour seen in the videos exactly.
+  b('B: +2 pad, same length'),
+
+  /// Two extra 0x00 bytes before the text, length field counting them.
+  c('C: +2 pad, full length'),
+
+  /// Original header, text as single-byte ASCII instead of UTF-16BE.
+  d('D: ASCII text');
+
+  final String label;
+
+  const LedFrameVariant(this.label);
+}
+
 /// Font/background color pair, inserted mid-message as `<C{font}{bg}>`.
 enum LedColor {
   red(0x52),
@@ -54,13 +80,15 @@ class LedProtocol {
   static const int _typeSpeed = 0x03;
   static const int _typeMessageList = 0x04;
 
-  static Uint8List _buildFrame(int type, int address, List<int> payload) {
+  /// [length] overrides the length field; defaults to the payload length.
+  static Uint8List _buildFrame(int type, int address, List<int> payload, {int? length}) {
+    final len = length ?? payload.length;
     final frame = <int>[
       ..._header,
       type,
       address,
-      (payload.length >> 8) & 0xFF,
-      payload.length & 0xFF,
+      (len >> 8) & 0xFF,
+      len & 0xFF,
       ...payload,
     ];
 
@@ -80,16 +108,26 @@ class LedProtocol {
     required LedMovingMode movingMode,
     required String text,
     int address = 0x00,
+    LedFrameVariant variant = LedFrameVariant.a,
   }) {
+    final padded = variant == LedFrameVariant.b || variant == LedFrameVariant.c;
+    final textBytes = variant == LedFrameVariant.d ? _encodeAscii(text) : _encodeUtf16Be(text);
+
     final payload = <int>[
       messageSlot.codeUnitAt(0),
       0x41, // Fixed "GB code" byte, per protocol doc.
       movingMode.code,
       0x00, // Reserved bit per doc's packet table; value unspecified there.
-      ..._encodeUtf16Be(text),
+      if (padded) ...[0x00, 0x00],
+      ...textBytes,
     ];
 
-    return _buildFrame(_typeMessage, address, payload);
+    return _buildFrame(
+      _typeMessage,
+      address,
+      payload,
+      length: variant == LedFrameVariant.b ? payload.length - 2 : null,
+    );
   }
 
   /// Wraps [text] with a `<C{font}{bg}>` color-change escape, matching the
@@ -122,6 +160,12 @@ class LedProtocol {
     ];
 
     return _buildFrame(_typeMessageList, address, payload);
+  }
+
+  // Non-ASCII characters become '?' — the sign's single-byte charset is
+  // unknown.
+  static List<int> _encodeAscii(String text) {
+    return text.codeUnits.map((c) => c < 0x80 ? c : 0x3F).toList();
   }
 
   static List<int> _encodeUtf16Be(String text) {

@@ -5,6 +5,8 @@ PODS:
     - FlutterMacOS
   - flutter_classic_bluetooth (0.1.0):
     - Flutter
+  - flutter_native_splash (2.4.3):
+    - Flutter
   - flutter_pcm_sound (0.0.1):
     - Flutter
   - record_ios (1.2.1):
@@ -14,6 +16,7 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_blue_plus_darwin (from `.symlinks/plugins/flutter_blue_plus_darwin/darwin`)
   - flutter_classic_bluetooth (from `.symlinks/plugins/flutter_classic_bluetooth/ios`)
+  - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
   - flutter_pcm_sound (from `.symlinks/plugins/flutter_pcm_sound/ios`)
   - record_ios (from `.symlinks/plugins/record_ios/ios`)
 
@@ -24,6 +27,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_blue_plus_darwin/darwin"
   flutter_classic_bluetooth:
     :path: ".symlinks/plugins/flutter_classic_bluetooth/ios"
+  flutter_native_splash:
+    :path: ".symlinks/plugins/flutter_native_splash/ios"
   flutter_pcm_sound:
     :path: ".symlinks/plugins/flutter_pcm_sound/ios"
   record_ios:
@@ -33,6 +38,7 @@ SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_blue_plus_darwin: ee2377ea51a6c9e481f2ed76ec597717ef5d287d
   flutter_classic_bluetooth: 2f3600b9c02bffaf72bf709d1f2dc35c1f5ffc7f
+  flutter_native_splash: c32d145d68aeda5502d5f543ee38c192065986cf
   flutter_pcm_sound: e9c2f6ce580eefcab2af46763f0354484d5c4ac8
   record_ios: 980fd386a97a35987d0fce3dfda4b26a38c90f4c
 
