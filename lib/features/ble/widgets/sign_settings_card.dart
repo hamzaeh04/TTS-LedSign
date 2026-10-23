@@ -86,22 +86,22 @@ class SignSettingsCard extends StatelessWidget {
                   onChanged: onMessageSlotChanged,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: _LabeledDropdown<LedMovingMode>(
-                  label: 'Moving Mode',
-                  value: movingMode,
-                  enabled: !previewMode,
-                  items: LedMovingMode.values.map((mode) {
-                    return DropdownMenuItem(
-                      value: mode,
-                      child: Text(mode.name[0].toUpperCase() + mode.name.substring(1)),
-                    );
-                  }).toList(),
-                  onChanged: onMovingModeChanged,
-                ),
-              ),
+              // const SizedBox(width: 12),
+              // Expanded(
+              //   flex: 2,
+              //   child: _LabeledDropdown<LedMovingMode>(
+              //     label: 'Moving Mode',
+              //     value: movingMode,
+              //     enabled: !previewMode,
+              //     items: LedMovingMode.values.map((mode) {
+              //       return DropdownMenuItem(
+              //         value: mode,
+              //         child: Text(mode.name[0].toUpperCase() + mode.name.substring(1)),
+              //       );
+              //     }).toList(),
+              //     onChanged: onMovingModeChanged,
+              //   ),
+              // ),
             ],
           ),
           const SizedBox(height: 14),

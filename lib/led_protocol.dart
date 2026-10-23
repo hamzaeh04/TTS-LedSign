@@ -111,7 +111,13 @@ class LedProtocol {
     LedFrameVariant variant = LedFrameVariant.a,
   }) {
     final padded = variant == LedFrameVariant.b || variant == LedFrameVariant.c;
-    final textBytes = variant == LedFrameVariant.d ? _encodeAscii(text) : _encodeUtf16Be(text);
+    final ascii = variant == LedFrameVariant.d;
+
+    // The sign swallows the first character of the text area, so a
+    // throw-away lead character is sent in front of the real text.
+    final textBytes = ascii
+        ? _encodeAscii('$_leadChar$text')
+        : _encodeUtf16Be('$_leadChar$text');
 
     final payload = <int>[
       messageSlot.codeUnitAt(0),
@@ -122,13 +128,21 @@ class LedProtocol {
       ...textBytes,
     ];
 
+    // The sign sizes the displayed text as (length - 4) / 2 characters,
+    // whatever the encoding, so the length field must say 2 bytes per real
+    // character. Using the real byte count makes it read past the text into
+    // the checksum / stale buffer bytes (trailing garbage) or, for ASCII,
+    // stop short (truncation).
     return _buildFrame(
       _typeMessage,
       address,
       payload,
-      length: variant == LedFrameVariant.b ? payload.length - 2 : null,
+      length: 4 + 2 * text.length,
     );
   }
+
+  // Sacrificial first character; see [sendMessage].
+  static const String _leadChar = ' ';
 
   /// Wraps [text] with a `<C{font}{bg}>` color-change escape, matching the
   /// protocol's in-message color codes.

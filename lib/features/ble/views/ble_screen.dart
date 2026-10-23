@@ -420,6 +420,10 @@ class _BleScreenState extends State<BleScreen> {
 
     if (text.isEmpty) return;
 
+    // Speed is a separate frame; (re)send it so the message scrolls at the
+    // chosen speed instead of whatever the sign last had.
+    await sendSpeed();
+
     await _sendAndLog(
       'Send Message (frame ${frameVariant.label})',
       LedProtocol.sendMessage(

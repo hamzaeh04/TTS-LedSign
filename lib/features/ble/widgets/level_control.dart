@@ -82,6 +82,8 @@ class LevelControl extends StatelessWidget {
               divisions: 7,
               label: '$value',
               onChanged: onSend == null ? null : (v) => onChanged(v.round()),
+              // Push the level to the sign when the user releases the slider.
+              onChangeEnd: onSend == null ? null : (_) => onSend!(),
             ),
           ),
         ],
