@@ -126,13 +126,13 @@ class ControlPanel extends StatelessWidget {
           onSend: onSendSpeed,
         ),
         const SizedBox(height: 16),
-        PlaylistCard(
-          previewMode: previewMode,
-          sending: sending,
-          messageListOrder: messageListOrder,
-          onToggleSlot: onToggleListSlot,
-          onSend: onSendPlaylist,
-        ),
+        // PlaylistCard(
+        //   previewMode: previewMode,
+        //   sending: sending,
+        //   messageListOrder: messageListOrder,
+        //   onToggleSlot: onToggleListSlot,
+        //   onSend: onSendPlaylist,
+        // ),
       ],
     );
   }

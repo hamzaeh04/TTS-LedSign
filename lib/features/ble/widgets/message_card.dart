@@ -106,42 +106,42 @@ class MessageCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: _ColorField(
-                  label: 'Text Color',
-                  value: colorFont,
-                  enabled: !previewMode,
-                  onChanged: onColorFontChanged,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ColorField(
-                  label: 'Background',
-                  value: colorBackground,
-                  enabled: !previewMode,
-                  onChanged: onColorBackgroundChanged,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Material(
-                color: bleTagBg,
-                borderRadius: BorderRadius.circular(12),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: previewMode ? null : onInsertColorTag,
-                  child: const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Icon(Icons.add, color: bleMaroon, size: 18),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
+          // Row(
+          //   crossAxisAlignment: CrossAxisAlignment.end,
+          //   children: [
+          //     Expanded(
+          //       child: _ColorField(
+          //         label: 'Text Color',
+          //         value: colorFont,
+          //         enabled: !previewMode,
+          //         onChanged: onColorFontChanged,
+          //       ),
+          //     ),
+          //     const SizedBox(width: 10),
+          //     Expanded(
+          //       child: _ColorField(
+          //         label: 'Background',
+          //         value: colorBackground,
+          //         enabled: !previewMode,
+          //         onChanged: onColorBackgroundChanged,
+          //       ),
+          //     ),
+          //     const SizedBox(width: 8),
+          //     Material(
+          //       color: bleTagBg,
+          //       borderRadius: BorderRadius.circular(12),
+          //       child: InkWell(
+          //         borderRadius: BorderRadius.circular(12),
+          //         onTap: previewMode ? null : onInsertColorTag,
+          //         child: const Padding(
+          //           padding: EdgeInsets.all(12),
+          //           child: Icon(Icons.add, color: bleMaroon, size: 18),
+          //         ),
+          //       ),
+          //     ),
+          //   ],
+          // ),
+          // const SizedBox(height: 18),
           SizedBox(
             width: double.infinity,
             height: 52,
@@ -169,10 +169,10 @@ class MessageCard extends StatelessWidget {
               ),
             ),
           ),
-          if (sendLog != null) ...[
-            const SizedBox(height: 14),
-            SendLogPanel(log: sendLog!, onClear: onClearLog),
-          ],
+          // if (sendLog != null) ...[
+          //   const SizedBox(height: 14),
+          //   SendLogPanel(log: sendLog!, onClear: onClearLog),
+          // ],
         ],
       ),
     );
