@@ -15,6 +15,8 @@ class ControlPanel extends StatelessWidget {
     required this.transport,
     required this.previewMode,
     required this.sending,
+    required this.stopping,
+    required this.messageOnScreen,
     required this.onExitPreview,
     required this.onChangeCharacteristic,
     required this.messageController,
@@ -25,6 +27,7 @@ class ControlPanel extends StatelessWidget {
     required this.onInsertColorTag,
     required this.onClearMessage,
     required this.onSendMessage,
+    required this.onStopMessage,
     required this.sendLog,
     required this.onClearLog,
     required this.addressHex,
@@ -46,6 +49,8 @@ class ControlPanel extends StatelessWidget {
   final LedTransport transport;
   final bool previewMode;
   final bool sending;
+  final bool stopping;
+  final bool messageOnScreen;
   final VoidCallback onExitPreview;
   final VoidCallback onChangeCharacteristic;
 
@@ -57,6 +62,7 @@ class ControlPanel extends StatelessWidget {
   final VoidCallback onInsertColorTag;
   final VoidCallback onClearMessage;
   final VoidCallback onSendMessage;
+  final VoidCallback onStopMessage;
   final String? sendLog;
   final VoidCallback onClearLog;
 
@@ -95,6 +101,8 @@ class ControlPanel extends StatelessWidget {
           controller: messageController,
           previewMode: previewMode,
           sending: sending,
+          stopping: stopping,
+          messageOnScreen: messageOnScreen,
           colorFont: colorFont,
           colorBackground: colorBackground,
           onColorFontChanged: onColorFontChanged,
@@ -102,6 +110,7 @@ class ControlPanel extends StatelessWidget {
           onInsertColorTag: onInsertColorTag,
           onClearMessage: onClearMessage,
           onSend: onSendMessage,
+          onStop: onStopMessage,
           sendLog: sendLog,
           onClearLog: onClearLog,
         ),

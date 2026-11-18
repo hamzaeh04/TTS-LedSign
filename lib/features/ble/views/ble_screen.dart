@@ -63,7 +63,7 @@ class _BleScreenState extends State<BleScreen> {
   String addressHex = '00';
   LedColor colorFont = LedColor.red;
   LedColor colorBackground = LedColor.black;
-  LedFrameVariant frameVariant = LedFrameVariant.b;
+  LedFrameVariant frameVariant = LedFrameVariant.a;
 
   int speed = 5;
   List<String> messageListOrder = [];
@@ -83,6 +83,14 @@ class _BleScreenState extends State<BleScreen> {
   // (see _sendAndLog) and lets the UI show a busy state instead of looking
   // like the tap did nothing.
   bool sending = false;
+
+  // True only while the Stop Message write is the one in flight, so the Send
+  // button doesn't show its "Sending…" spinner for a Stop press.
+  bool stopping = false;
+
+  // True once a message has been written to the sign successfully and not
+  // yet stopped. Stop Message is only enabled while this is set.
+  bool messageOnScreen = false;
 
   bool get connected => transport == LedTransport.ble
       ? device != null
@@ -367,43 +375,30 @@ class _BleScreenState extends State<BleScreen> {
   // writes to the same BLE characteristic can interleave/corrupt what the
   // sign actually receives, which showed up as the sign displaying a
   // truncated/shifted version of the message.
-  Future<void> _sendAndLog(String action, List<int> bytes) async {
-    if (sending) return;
+  Future<bool> _sendAndLog(String action, List<int> bytes) {
+    return _sendSequence([(action, bytes)]);
+  }
+
+  // Writes each frame in order, holding `sending` for the whole run plus a
+  // settle pause after every frame. The sign drops any frame that arrives
+  // while it is still busy with the previous one, so neither a second tap
+  // nor the next frame may start before the pause has elapsed.
+  // Returns true only if every frame was written without an error.
+  Future<bool> _sendSequence(List<(String, List<int>)> steps) async {
+    if (sending) return false;
 
     setState(() {
       sending = true;
     });
 
+    var allOk = true;
+
     try {
-      final hex = bytes
-          .map((b) => b.toRadixString(16).padLeft(2, '0'))
-          .join(' ');
-
-      String asText;
-      try {
-        asText = utf8.decode(bytes, allowMalformed: true);
-      } catch (e) {
-        asText = '(could not decode as text: $e)';
+      for (final (action, bytes) in steps) {
+        if (!await _writeAndLog(action, bytes)) allOk = false;
+        await Future.delayed(LedProtocol.interFrameDelay);
       }
-
-      final target = transport == LedTransport.ble
-          ? 'BLE characteristic ${targetCharacteristic?.uuid ?? '(none)'}'
-          : 'Classic Bluetooth ${classicConnection?.address ?? '(none)'}';
-
-      final error = await _writeToTarget(bytes);
-
-      final log = StringBuffer()
-        ..writeln('$action — ${DateTime.now().toIso8601String()}')
-        ..writeln('Target: $target')
-        ..writeln('Result: ${error == null ? 'sent OK, no error thrown' : 'FAILED — $error'}')
-        ..writeln('Bytes (${bytes.length}): $hex')
-        ..write('As text: $asText');
-
-      if (mounted) {
-        setState(() {
-          sendLog = log.toString();
-        });
-      }
+      return allOk;
     } finally {
       if (mounted) {
         setState(() {
@@ -415,25 +410,96 @@ class _BleScreenState extends State<BleScreen> {
     }
   }
 
+  Future<bool> _writeAndLog(String action, List<int> bytes) async {
+    final hex = bytes
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join(' ');
+
+    String asText;
+    try {
+      asText = utf8.decode(bytes, allowMalformed: true);
+    } catch (e) {
+      asText = '(could not decode as text: $e)';
+    }
+
+    final target = transport == LedTransport.ble
+        ? 'BLE characteristic ${targetCharacteristic?.uuid ?? '(none)'}'
+        : 'Classic Bluetooth ${classicConnection?.address ?? '(none)'}';
+
+    final error = await _writeToTarget(bytes);
+
+    final log = StringBuffer()
+      ..writeln('$action — ${DateTime.now().toIso8601String()}')
+      ..writeln('Target: $target')
+      ..writeln('Result: ${error == null ? 'sent OK, no error thrown' : 'FAILED — $error'}')
+      ..writeln('Bytes (${bytes.length}): $hex')
+      ..write('As text: $asText');
+
+    if (mounted) {
+      setState(() {
+        sendLog = log.toString();
+      });
+    }
+
+    return error == null;
+  }
+
   Future<void> sendMessage() async {
     final text = messageController.text.trim();
 
     if (text.isEmpty) return;
 
-    // Speed is a separate frame; (re)send it so the message scrolls at the
-    // chosen speed instead of whatever the sign last had.
-    await sendSpeed();
+    // Speed is a separate frame; it is re-sent after the message so the
+    // message scrolls at the chosen speed. Order and spacing matter: the
+    // sign drops a frame that arrives while it is still busy with the
+    // previous one (see LedProtocol.messageSequence).
+    final frames = LedProtocol.messageSequence(
+      messageSlot: messageSlot,
+      movingMode: movingMode,
+      text: text,
+      speed: speed,
+      address: _address,
+      variant: frameVariant,
+    );
 
-    await _sendAndLog(
-      'Send Message (frame ${frameVariant.label})',
+    final ok = await _sendSequence([
+      ('Send Message (frame ${frameVariant.label})', frames[0]),
+      ('Send Speed', frames[1]),
+    ]);
+
+    if (ok && mounted) {
+      setState(() {
+        messageOnScreen = true;
+      });
+    }
+  }
+
+  // The protocol has no clear/stop command, so the screen is blanked by
+  // overwriting the selected slot with a single space.
+  Future<void> stopMessage() async {
+    if (sending || !messageOnScreen) return;
+
+    setState(() {
+      stopping = true;
+    });
+
+    final ok = await _sendAndLog(
+      'Stop Message (frame ${frameVariant.label})',
       LedProtocol.sendMessage(
         messageSlot: messageSlot,
         movingMode: movingMode,
-        text: text,
+        text: LedProtocol.blankMessage,
         address: _address,
         variant: frameVariant,
       ),
     );
+
+    if (!mounted) return;
+
+    setState(() {
+      stopping = false;
+      if (ok) messageOnScreen = false;
+    });
   }
 
   Future<void> sendSpeed() async {
@@ -551,6 +617,8 @@ class _BleScreenState extends State<BleScreen> {
       transport: transport,
       previewMode: previewMode,
       sending: sending,
+      stopping: stopping,
+      messageOnScreen: messageOnScreen,
       onExitPreview: () => setState(() => debugPreview = false),
       onChangeCharacteristic: () {
         setState(() {
@@ -565,6 +633,7 @@ class _BleScreenState extends State<BleScreen> {
       onInsertColorTag: _insertColorTag,
       onClearMessage: _clearMessage,
       onSendMessage: sendMessage,
+      onStopMessage: stopMessage,
       sendLog: sendLog,
       onClearLog: () => setState(() => sendLog = null),
       addressHex: addressHex,

@@ -141,8 +141,40 @@ class LedProtocol {
     );
   }
 
+  /// Text that blanks a slot: the sign shows a space as an empty screen.
+  static const String blankMessage = ' ';
+
   // Sacrificial first character; see [sendMessage].
   static const String _leadChar = ' ';
+
+  /// Pause the app leaves between consecutive frames. The sign needs time to
+  /// store/apply one frame before it can take the next; a frame that arrives
+  /// while it is still busy is dropped and the previous message stays on
+  /// screen.
+  static const Duration interFrameDelay = Duration(milliseconds: 400);
+
+  /// Frames to write, in order, for one "Send Message" tap. The message goes
+  /// first so it is already stored by the time the speed change is applied;
+  /// sending speed first made the sign keep showing the previous message.
+  static List<Uint8List> messageSequence({
+    required String messageSlot,
+    required LedMovingMode movingMode,
+    required String text,
+    required int speed,
+    int address = 0x00,
+    LedFrameVariant variant = LedFrameVariant.a,
+  }) {
+    return [
+      sendMessage(
+        messageSlot: messageSlot,
+        movingMode: movingMode,
+        text: text,
+        address: address,
+        variant: variant,
+      ),
+      sendSpeed(speed, address: address),
+    ];
+  }
 
   /// Wraps [text] with a `<C{font}{bg}>` color-change escape, matching the
   /// protocol's in-message color codes.

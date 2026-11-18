@@ -63,8 +63,8 @@ class SignSettingsCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           TextFormField(
-            initialValue: addressHex,
-            enabled: !previewMode,
+            initialValue: '00',
+            enabled: false,
             textCapitalization: TextCapitalization.characters,
             style: const TextStyle(color: bleTextDark, fontWeight: FontWeight.w600),
             decoration: _pillDecoration(),
@@ -77,8 +77,8 @@ class SignSettingsCard extends StatelessWidget {
               Expanded(
                 child: _LabeledDropdown<String>(
                   label: 'Slot',
-                  value: messageSlot,
-                  enabled: !previewMode,
+                  value: 'A',
+                  enabled: false,
                   items: [
                     for (final letter in kMessageSlots)
                       DropdownMenuItem(value: letter, child: Text(letter)),
@@ -110,8 +110,8 @@ class SignSettingsCard extends StatelessWidget {
           // working one is confirmed.
           _LabeledDropdown<LedFrameVariant>(
             label: 'Frame Format (test)',
-            value: frameVariant,
-            enabled: !previewMode,
+            value: LedFrameVariant.a,
+            enabled: false,
             items: [
               for (final variant in LedFrameVariant.values)
                 DropdownMenuItem(value: variant, child: Text(variant.label)),

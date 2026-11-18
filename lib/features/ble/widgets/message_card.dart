@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../constants/color_constants.dart';
 import '../../../led_protocol.dart';
 import 'card_title.dart';
+import 'frequent_texts.dart';
 import 'send_log_panel.dart';
 
 Color _swatchFor(LedColor color) {
@@ -44,6 +45,8 @@ class MessageCard extends StatelessWidget {
     required this.controller,
     required this.previewMode,
     required this.sending,
+    required this.stopping,
+    required this.messageOnScreen,
     required this.colorFont,
     required this.colorBackground,
     required this.onColorFontChanged,
@@ -51,6 +54,7 @@ class MessageCard extends StatelessWidget {
     required this.onInsertColorTag,
     required this.onClearMessage,
     required this.onSend,
+    required this.onStop,
     required this.sendLog,
     required this.onClearLog,
   });
@@ -58,6 +62,8 @@ class MessageCard extends StatelessWidget {
   final TextEditingController controller;
   final bool previewMode;
   final bool sending;
+  final bool stopping;
+  final bool messageOnScreen;
   final LedColor colorFont;
   final LedColor colorBackground;
   final ValueChanged<LedColor> onColorFontChanged;
@@ -65,11 +71,16 @@ class MessageCard extends StatelessWidget {
   final VoidCallback onInsertColorTag;
   final VoidCallback onClearMessage;
   final VoidCallback onSend;
+  final VoidCallback onStop;
   final String? sendLog;
   final VoidCallback onClearLog;
 
   @override
   Widget build(BuildContext context) {
+    // Send only looks busy for its own writes, not while Stop is in flight.
+    final sendBusy = sending && !stopping;
+    final stopEnabled = !previewMode && !sending && messageOnScreen;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -154,7 +165,7 @@ class MessageCard extends StatelessWidget {
                 disabledForegroundColor: bleMaroon.withValues(alpha: 0.5),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
               ),
-              icon: sending
+              icon: sendBusy
                   ? const SizedBox(
                       width: 18,
                       height: 18,
@@ -162,12 +173,43 @@ class MessageCard extends StatelessWidget {
                     )
                   : const Icon(Icons.play_arrow_rounded),
               label: Text(
-                sending
+                sendBusy
                     ? 'Sending…'
                     : (previewMode ? 'Connect a device to send' : 'Send Message'),
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: OutlinedButton.icon(
+              onPressed: stopEnabled ? onStop : null,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: bleMaroon,
+                side: BorderSide(
+                  color: stopEnabled ? bleMaroon : blePinkChip,
+                  width: 1.5,
+                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+              ),
+              icon: stopping
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: bleMaroon),
+                    )
+                  : const Icon(Icons.stop_rounded),
+              label: Text(stopping ? 'Stopping…' : 'Stop Message', style: TextStyle(fontWeight: FontWeight.w600)),
+            ),
+          ),
+          FrequentTexts(
+            enabled: !previewMode && !sending,
+            onUse: (text) {
+              controller.text = text;
+              onSend();
+            },
           ),
           // if (sendLog != null) ...[
           //   const SizedBox(height: 14),
